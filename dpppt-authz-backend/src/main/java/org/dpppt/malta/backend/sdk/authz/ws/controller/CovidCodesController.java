@@ -45,7 +45,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
 @RestController
-@CrossOrigin("http://localhost:3000")
 @RequestMapping("/v1")
 public class CovidCodesController {
 
