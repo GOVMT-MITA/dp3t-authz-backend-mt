@@ -41,4 +41,6 @@ public interface AuthzDataService {
 	
 	void cleanDB(Duration retentionPeriod);
 	
+	List<CovidCode> getAll();
+	
 }

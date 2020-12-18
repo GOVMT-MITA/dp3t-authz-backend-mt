@@ -243,4 +243,28 @@ public class JDBCAuthzDataServiceImpl implements AuthzDataService {
 		
 	}
 
+	@Override
+	public List<CovidCode> getAll() {
+		
+		String sql = "select * from t_covid_code";
+		MapSqlParameterSource params = new MapSqlParameterSource();
+		
+		List<CovidCode> codes = jt.query(sql, params, new CovidCodeRowMapper());
+
+		codes.forEach(c -> {
+			
+			String tlsql = "select * from t_token_log where fk_covid_code_id = :fk_covid_code_id";
+			MapSqlParameterSource tlparams = new MapSqlParameterSource();
+			tlparams.addValue("fk_covid_code_id", c.getId());
+			
+			List<TokenIssueLog> logs = jt.query(tlsql, tlparams, new TokenIssueLogRowMapper());
+			
+			c.setIssueLogs(logs);
+			
+		});
+		
+		return codes;		
+		
+	}
+
 }

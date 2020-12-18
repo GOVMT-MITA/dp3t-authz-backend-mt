@@ -33,6 +33,7 @@ import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.dpppt.malta.backend.sdk.authz.data.AuthzDataService;
 import org.dpppt.malta.backend.sdk.authz.data.JDBCAuthzDataServiceImpl;
+import org.dpppt.malta.backend.sdk.authz.service.CsvDumpService;
 import org.dpppt.malta.backend.sdk.authz.ws.HealthCheck;
 import org.dpppt.malta.backend.sdk.authz.ws.controller.CovidCodesController;
 import org.dpppt.malta.backend.sdk.authz.ws.controller.DPPPTAuthzController;
@@ -98,8 +99,13 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	}
 
 	@Bean
-	public CovidCodesController covidCodesController(AuthzDataService authzDataService, Environment environment) {
-		return new CovidCodesController(authzDataService, environment);
+	public CsvDumpService csvDumpService() {
+		return new CsvDumpService();
+	}
+
+	@Bean
+	public CovidCodesController covidCodesController(CsvDumpService csvDumpService, AuthzDataService authzDataService, Environment environment) {
+		return new CovidCodesController(csvDumpService, authzDataService, environment);
 	}
 	
 	@Bean

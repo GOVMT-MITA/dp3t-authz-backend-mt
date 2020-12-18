@@ -10,6 +10,7 @@
 
 package org.dpppt.malta.backend.sdk.authz.ws.controller;
 
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -19,9 +20,12 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.dpppt.malta.backend.sdk.authz.data.AuthzDataService;
 import org.dpppt.malta.backend.sdk.authz.data.model.CovidCode;
 import org.dpppt.malta.backend.sdk.authz.data.model.CovidCodesPage;
+import org.dpppt.malta.backend.sdk.authz.service.CsvDumpService;
 import org.dpppt.malta.backend.sdk.authz.ws.model.CovidCodeRequestModel;
 import org.dpppt.malta.backend.sdk.authz.ws.model.CovidCodeResponseModel;
 import org.dpppt.malta.backend.sdk.authz.ws.model.CovidCodesPageResponseModel;
@@ -29,6 +33,10 @@ import org.dpppt.malta.backend.sdk.authz.ws.util.CovidCodeUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -38,6 +46,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,11 +66,13 @@ public class CovidCodesController {
 	@Value("${authz.covidcode.validity.days:1}")
 	private int covidCodeValidityDays;
 	
+	private CsvDumpService csvDumpService;
 	private AuthzDataService covidCodesDataService;
 	private Environment environment;
 	
-	public CovidCodesController(AuthzDataService covidCodesDataService, Environment environment) {
+	public CovidCodesController(CsvDumpService csvDumpService, AuthzDataService covidCodesDataService, Environment environment) {
 		super();
+		this.csvDumpService = csvDumpService;
 		this.covidCodesDataService = covidCodesDataService;
 		this.environment = environment;
 	}
@@ -216,5 +227,23 @@ public class CovidCodesController {
 		return res;
 		
 	}
+	
+	@RequestMapping(value = "/csv",
+    		produces = { "text/csv" },
+            method = RequestMethod.GET)
+	@ResponseBody	
+	public ResponseEntity<Resource> getAllAsCsv(@RequestParam(name="offset", required=false, defaultValue="0") int timezoneOffset) throws Exception {
+		
+		
+		Resource fout = new ByteArrayResource(
+				csvDumpService.toCsv(covidCodesDataService.getAll(), ZoneOffset.ofHours(timezoneOffset)).getBytes()
+				);
+		
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION,
+				"attachment; filename=\"" + "CovidCodes" + ".csv" + "\"").body(fout);
+	}
+
+
 	
 }
